@@ -12,27 +12,7 @@ namespace DatingApp.Api
 {
     public class Program
     {
-        //angular is client side framework
-        // nodejs is server side java script run time
-        // nodejs comes with npm which is package eco system that manages packages and their dependencies
-        // dotnet -h
-        // dotnet new -h
-        // dotnet new webapi -h
-        //dotnet new webapi -o DatingApp.API -n DatingApp.API
-        //To launch use the command code .
-        //download c# for visual studio code. if update failed upgrade vs code and then upgrade
-        //download c# ide extensions for VS Code
-        //download nuget package manager. for angular we use npm package. reload after installation
-        //to run use dotnet run or dotnet watch run
-        //to add nuget use ctrl+shift+p >nuget add package
-        //to add incremental migration run the following command to add classes to migration folder. 
-        //the datacontextmodelsnapshot.cs is entityfw to keep track which migration is applied
-        //initialcreatedesigner.cs purely used to designed what to remove from datacontextmodelsnapshop
-        //initialcreate has up (create or change db or tables. here Values is the table with 2 columns id and name. uses id as primary key by default) and down (if we want to roll back this will drop table and values)
-        //dotnet ef migrations add InitialCreate
-        //dotnet ef database update this creates datingapp.db
-        //download angular cli
-        //angular cli contains is the angular equivalent of .net cli
+ 	//angular cli contains is the angular equivalent of .net cli
         //npm install -g @angular / cli@6.0.8
         //TO create new angular project type ng new DatingApp-SPA
         //IN visual studio 2019 by right clicking and add existing web site
@@ -55,11 +35,19 @@ namespace DatingApp.Api
         //debugger for chrome, material icon theme, path intellisense, prettier, tslint
         //create a new component in app folder called value. this will add css, html, spec.ts and component.ts
         //in app.module.cs valuecomponent is automatically added
+        
         //into app.module.cs the import http client module first the name space and the imports section to make web api call
-        //import {HttpClientModule} from '@angular/common/http'; //HttpClientModule
-        //in value.component.ts define getvalue method, update constuctor and ngoninit to call get values after constructor
-        //cors (cross origin resource sharing) is security measure which clients are allowed to access api
-        //add *ngfor to display values
+            //import {HttpClientModule} from '@angular/common/http'; //IN IMPORT section add HttpClientModule
+            
+        //in value.component.ts define getvalue method, update constuctor with http:HttpClient and ngoninit to call get values after constructor
+        //make sure the value.component.ts has import { HttpClient } from '@angular/common/http';
+        //in appcomponent.html add <app-value></app-value>
+            //cors (cross origin resource sharing) is security measure which clients are allowed to access api
+            //add *ngfor to display values in value.component.html
+        //<p *ngFor="let value of values">
+        // {{value.id}},{{value.name}}
+        //</p>
+
         //download bootstrap and fontawesome npm install bootstrap font-awesome
         //in style.css add @import '../node_modules/bootstrap/dist/css/bootstrap.min.css'
         //@import '../node_modules/font-awesome/css/font-awesome.min.css'
