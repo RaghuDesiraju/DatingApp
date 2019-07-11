@@ -11,7 +11,7 @@ import { HttpClientModule } from '@angular/common/http';
       ValueComponent
    ],
    imports: [
-      BrowserModule,s
+      BrowserModule,
       HttpClientModule
    ],
    providers: [],
