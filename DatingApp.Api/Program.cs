@@ -65,7 +65,9 @@ namespace DatingApp.Api
         //@import '../node_modules/font-awesome/css/font-awesome.min.css'
         //type git for all commands
         //initialize git init
-        //
+        //git remote add origin https://github.com/RaghuDesiraju/DatingApp.git
+        //git commit -m "second commit"
+        //git push -u origin master
 
         public static void Main(string[] args)
         {
