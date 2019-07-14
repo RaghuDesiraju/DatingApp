@@ -5,9 +5,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using DatingApp.Api.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace DatingApp.Api.Controllers
 {
+    [Authorize]//everything in this has to be authorized request
     //[Route("api/[controller]")]
     [Route("api/[action]")]
     [ApiController]
@@ -38,6 +40,7 @@ namespace DatingApp.Api.Controllers
            return Ok(values);
         }
 
+        [AllowAnonymous]//no need for token
         // GET api/values/5
         [HttpGet("{id}")]
         [ActionName("GetByID")]

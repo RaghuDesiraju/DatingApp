@@ -1,0 +1,54 @@
+1. Here we implement security
+Here we hash the passwordwuth sha512 and it gets stored in the database. however hashes are easy to decrypt because it generates same text
+so we also add a salt to a password. salt is randomly generated and added to the password
+salt is stored in db. it increases the difficulty of hacking the database.
+2. create model users and run the following entity framework command
+dotnet ef migrations add AddedUserEntity
+we need to create tables to database
+dotnet ef database update
+4. we need to register and login the user with "repository pattern". the repository pattern mediates 
+between data source layer and the business layers of the application. it eliminates duplicate query logic, decouples appln from persistance framework 
+and all db queries are in same place, promotes testability
+It queries the data souce for the data, maps the data from the datasouce to a business entity and persists changes in the business entity to the data source.
+currently we are doing kesterl->controller->dbcontext->ef->db
+next we do controller->repository interface (get users, get user, login)->repository implementation which query individual data sources (cloud, disk, memory)
+
+5. create IAUTH interface and its implementation
+6. register the service in start up
+7.create controller
+8. Add debug configuration .Net core attach to .net core console app. select .netcoreattach
+9. Use DTO for objects and set required and string length parameters. Pass the dto directly into controller
+10. If [ApiController] in controller is commented then we will get 500 object reference not found. Use Model State to throw error
+11. For token authentication we use JWT web token which is self contained data whith credential, claims etc
+12. JWT MAKES 3 parts 1. header with alg and type 2. payload contains not befor nbf and issued at which match 3. secret - uses 
+    HMACSHA256 (BASE 64URLEncode (header) base64urlencode(payload) and secret)
+13. User sends user name and pwd to the server, server hashes the user name and password if both hash password matches with the 
+    one in database server sends back the token. The JWT token is stored locally for every single requests. 
+14. Return token to controller. In contoller method add [Authorize] tag on the top to allow authorization for all methods. To exclude few methods put  [AllowAnonymous]
+15. In app settings define token name16. in auth repository for login return token
+16. Register this authentication in start.up.cs to use JWT
+  services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options=> {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.ASCII.GetBytes(
+                        Configuration.GetSection("AppSettings:Token").Value)),
+                    ValidateIssuer = false,
+                    ValidateAudience = false
+                };
+                });
+
+ app.UseAuthentication();
+
+17. In POSTMAN project create raw message to login and retrieve the token. Make sure content type is application/json
+http://localhost:5000/api/auth/login
+{
+	"username": "raghu",
+	"password": "password"
+}
+Example of token returned: eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIzIiwidW5pcXVlX25hbWUiOiJyYWdodSIsIm5iZiI6MTU2Mjk4ODcyNSwiZXhwIjoxNTYzMDc1MTI1LCJpYXQiOjE1NjI5ODg3MjV9.CK4P_VcTCdVfUfnjjGujg6VyQGorT32swx9Lc14Rkf6aieGv5hC2D5NkcPaHdXkoFENDu_Ga-SIA5b9_CpJsTA
+18. Create another POSTMAN request for http://localhost:5000/api/GetAll2. In the headers add authorization and value Bearer token name retieved earlier. 
+Copy the token without double quotes
+Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIzIiwidW5pcXVlX25hbWUiOiJyYWdodSIsIm5iZiI6MTU2Mjk4ODcyNSwiZXhwIjoxNTYzMDc1MTI1LCJpYXQiOjE1NjI5ODg3MjV9.CK4P_VcTCdVfUfnjjGujg6VyQGorT32swx9Lc14Rkf6aieGv5hC2D5NkcPaHdXkoFENDu_Ga-SIA5b9_CpJsTA
+Run to retrieve values

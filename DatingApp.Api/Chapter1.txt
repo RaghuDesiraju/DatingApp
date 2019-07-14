@@ -1,0 +1,29 @@
+ now do ng serve (if compilation issues are found run the command: npm install rxjs@6.0.0 --save)
+        when the browser is clicked output will be java script as browser cannot understand typescript
+        download extension manager
+        first get angular snippets by john papa, angular files 1.6.2, angular language service (this can tell which methods are written)
+        angular2 switcher (helps to switch between component file to html file because of shortcut keys), auto rename tagm, bracket pair colorizer,
+        debugger for chrome, material icon theme, path intellisense, prettier, tslint
+        create a new component in app folder called value. this will add css, html, spec.ts and component.ts
+        in app.module.cs valuecomponent is automatically added
+        
+        into app.module.cs the import http client module first the name space and the imports section to make web api call
+            import {HttpClientModule} from '@angular/common/http'; IN IMPORT section add HttpClientModule
+            
+        in value.component.ts define getvalue method, update constuctor with http:HttpClient and ngoninit to call get values after constructor
+        make sure the value.component.ts has import { HttpClient } from '@angular/common/http';
+        in appcomponent.html add <app-value></app-value>
+            cors (cross origin resource sharing) is security measure which clients are allowed to access api
+            add *ngfor to display values in value.component.html
+        <p *ngFor="let value of values">
+         {{value.id}},{{value.name}}
+        </p>
+
+        download bootstrap and fontawesome npm install bootstrap font-awesome
+        in style.css add @import '../node_modules/bootstrap/dist/css/bootstrap.min.css'
+        @import '../node_modules/font-awesome/css/font-awesome.min.css'
+        type git for all commands
+        initialize git init
+        git remote add origin https:github.com/RaghuDesiraju/DatingApp.git
+        git commit -m "second commit"
+        git push -u origin master

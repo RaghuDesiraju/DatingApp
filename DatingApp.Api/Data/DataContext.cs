@@ -12,5 +12,6 @@ namespace DatingApp.Api.Data
 
         //THIS is going to be table name
         public DbSet<DatingApp.Api.Models.Value>Values{get;set;}
+        public DbSet<DatingApp.Api.Models.User>Users{get;set;}
     }
 }
