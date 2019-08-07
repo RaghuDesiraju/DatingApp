@@ -1,0 +1,133 @@
+Implement login page in angular js
+From getbootstrap.com in examples section we will use jumbotron. We will replace search with login. 
+Right click and view source and capture initial nav bar element
+Generate new component nav. We will add this nav component from app component
+The declarations in app.module.cs has automatic declaration for nav.component 
+Copy the entire section to nav.component.html
+In appcomponent.html remove open and close div, update menu items and add <app-nav></app=nav>
+Edit nav.component.html as needed
+from html template created and edited above we need to pass the fields username, password as object. 
+
+we will add component to nav.component.ts  model: any = {};
+This model variable declared is important when two way binding is defined below
+Also add to nav.component.ts a login form. Add login() method console.log(this.model);
+There are 2 types of forms - template and reactive. Here we do template form
+Now we need to tell angular our form as login and we will use template reference variables. Define #loginForm="ngForm" in nav.component.html
+In app.module.ts in imports section add FormsModule and import it from top import {FormsModule} from '@angular/forms';
+Angular supports "2 way binding from template" to component. in nav.component.html add ngModel (ex [(ngModel)]="model.username" 
+    and provide the login function (ngSubmit)="login()"). Here we are doing at form level rather than at button level
+Define names too and required property
+In nav.component.html add validation to make fields mandatory and add form state. Add pre section for demo purpose.
+<!--<pre>
+  Form Valid: {{loginForm.valid}}
+  Form Touched: {{loginForm.touched}} 
+  Form Dirty: {{loginForm.dirty}}
+  Form Value: {{loginForm.value | json}}
+  Username Valid: {{username.valid}}
+  Username Touched: {{username.touched}} 
+  Username Dirty: {{username.dirty}}
+  Username Value: {{username.value}}
+  Password Valid: {{password.valid}}
+  Password Touched: {{password.touched}} 
+  Password Dirty: {{password.dirty}}
+  Password Value: {{password.value}}
+</pre>-->
+***To avoid errors add reference variables  #username="ngModel" and #password="ngModel"   ***
+Do ngserv and you can see the field valid, dirty etc
+Remove these since its temporary
+You can disable the login button if form is not valid [disabled]="!loginForm.valid" 
+
+Now we will inject angular services to components. Do generate service "auth"
+Create a new folder _services which holds all calls to API.
+Right click generate service auth. It adds spec.ts and service.ts.
+A service is not injectable but a component is. So we need Injectable operator. We need to add this service to app.module.cs to provider section
+auth.service.ts has Injectable declarator which allows to inject calls into service like httpcontextmodule
+providedin tells which module is providing the service. root means app.module.ts is providing the service
+In app.module.cs to the providers section add AuthService. Import of auth service is done automatically
+In auth.service.ts inject httpClientService - constructor(private http: HttpClient) {}. 
+Said differently in constructor of auth.service.ts create httpclient module and add a new base URL method
+the api actually returns token object for the above parameters. We will use rxgs operators passed through pipe parameters.
+We are using rxgs, This has pipe method.
+This login method returns token which will be added to localstorage by auth.service.ts
+login(model: any) {
+  return this.http.post(this.baseURL + 'login', model)
+        .pipe(
+          map((response: any) => {
+            const user = response;
+            if (user) {
+              localStorage.setItem('token', user.token);
+            }
+          })
+        );
+ }
+
+we will consume this auth service in our login method in nav.component.ts
+in constructor of nav.component.cs add AuthService   constructor(private authService: AuthService) { }
+Update login() method in nav.component.ts to subscribe and call the event.
+this.authService.login(this.model.subscribe)(next=>{
+  console.log('logged in successfully')
+  },error=>{
+    console.log('Failed to login');
+  }
+});
+To test check the network and console in inspect page of browser to make sure eveything worked fine. You can see the token in application tab->localStorage 
+
+Now we will conditionally render form if user is not logged in using *ngIf
+From bootstrap we will use dropdown from documentation->components and put nav.component.html
+Make it into link by changing dropdown as a and update the text and styles. The text is Welcome which contains Edit Profile and logout
+In nav.component.ts add loggedin and logout method. loggedin method will tell if there is token or not
+loggedIn(){
+  const token = localStorage.getItem('token');
+  return !!token;
+}
+
+loggedOut(){
+localStorage.removeItem('token');
+console.log('loggedOut');
+}
+In nav.component.html we will add *ngIf=loggedIn() to welcome user link and display user name and password only to non loggedin state *ngIf="!loggedIn"
+For now provide hyperlink for logout and add click method (click)="logOut()" and it removes token from localstorage
+
+Now we will create register component which will be child component of our home component.
+create 2 components - home and register.
+the home component has 2 containers one for the page detail (with 2 buttons register and learn more) and register component
+In home.component.html we defined mt-5 which is bootstrap way of defining margin, this will have 2 buttons aligned to center
+there will be another container which holds entire register page
+In app.component.html We will replace <h1> Dating App </h1> with the new home page and put <app-home></app-home>
+
+In register.component.ts add model variable of type any, add method to register and cancel
+in register.component.html add #registerForm="ngForm" (ngSubmit)="register()" [(ngModel)]="model.username" and [(ngModel)]="model.password" and cancel button click event
+To the home.component.html add    <app-register></app-register>.
+Also add ngif for registermode in home.component.html to display register form only when button is clicked 
+
+Now we will do parent to child component communication. 
+in home.component.html we added  <app-register></app-register> which is a child component
+initially we remove allow anonymous in our values service and copy the get values from values component to home component
+delete values component. also remove from app.module.ts. remove from appcomponent.html too
+temporarily add <p *ngFor="let value of values">{{value.name}}</p>
+Now to add parent property into child define property in app-register in home.component.html <app-register [valuesFromHome]="values"></app-register>
+to receive propoerty in child register.component.ts use @Input() valuesFromHome: any: resolve dependencies
+in register.component.html we will consume
+<div class="form-group">
+    <label for="favoriteValue"> What is your favorite favoriteValue</label>
+    <select class="form-control" id="favoriteValue">
+      <option *ngFor="let value of valuesFromHome"  [value]="value">{{value.name}}</option>
+    </select>
+  </div>
+
+
+  Now we will do the communication from child to parent by selecting the cancel and sending to parent
+  @Output() cancelRegister = new EventEmitter(); 
+  In cancel add this.cancelRegister.emit(false);
+  In home component add (cancelRegister)="cancelRegisterMode($event)" to appregister section 
+  basically we are tying cancelregister event in register component with cancelRegisterMode 
+  Now cancel button is active
+
+  Now we will add registermethod to auth service. In _service we have auth.service.ts to this add register method
+  in register.component.ts add authService. in register method add
+this.authService.register(this.model.subscribe)(next=>{
+  console.log('registration successfull')
+  },error=>{
+    console.log(error);
+  }
+});
