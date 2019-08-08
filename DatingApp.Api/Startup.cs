@@ -14,6 +14,10 @@ using DatingApp.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.Net;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http;
+using DatingApp.Api.Helpers;
 
 namespace DatingApp.Api
 {
@@ -56,8 +60,17 @@ namespace DatingApp.Api
             }
             else
             {
-                 //usehsts is the middle ware which is security enhancement which adds strict transport security header. it prevents sending responses in http
-                //app.UseHsts();
+                app.UseExceptionHandler(builder => {
+                                        builder.Run (async context => {
+                                            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                                            var error = context.Features.Get<IExceptionHandlerFeature>();
+                                            if(error != null)
+                                            {
+                                                context.Response.AddApplicationError(error.Error.Message);
+                                                await context.Response.WriteAsync(error.Error.Message);            
+                                            }
+                                        }) ;
+                                    });       
             }
 
             app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());

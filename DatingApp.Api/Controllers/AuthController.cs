@@ -52,6 +52,7 @@ namespace DatingApp.Api.Controllers
         [HttpPost("login")]
         public async Task<IActionResult>Login(UserForLoginDTO userForLoginDTO)
         {
+           //throw new Exception("Raghu test exception");
             var userFromRepo = await _repo.Login(userForLoginDTO.UserName.ToLower(),userForLoginDTO.Password);
             if(userFromRepo == null)
                 return Unauthorized();

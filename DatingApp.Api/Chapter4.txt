@@ -1,0 +1,95 @@
+In this chapter we will handle errors
+In login method of datingapp.api we will add throw exception
+We will configure global exception handler without putting try catch block for each method
+In startup.cs for configure method in else condition (if not development) we will add global exception handler
+ app.UseExceptionHandler(builder => {
+                    builder.Run (async context => {
+                        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                        var error = context.Features.Get<IExceptionHandlerFeature>();
+                        if(error != null)
+                        {
+                            await context.Response.WriteAsync(error.Error.Message);            
+                        }
+                    }) ;
+                });      
+
+In network we will see 500 InternalServerError but not agetting CORS headers
+we can customize response toi display cors headers.
+Create new folder Helpers and add extension class Extensions.cs
+public static void AddApplicationError(this.HttpResponse response, string message)
+{
+    response.Headers.Add("Application-Error",message);
+    response.Headers.Add("Access-Control-Expose-Headers","Application-Error");
+    response.Headers.Add("Access-Control-Allow-Origin",*");
+}
+
+app.UseExceptionHandler(builder =>
+    builder.Run (async context => {
+        context.Response.StatusCode=(int)HttpStatusCode.InternalServerError;
+        var error = context.Features.Get<IExceptionHandlerFeature>();
+        if(error != null)
+        {
+            context.Response.AddApplicationError(error.Error.Message);
+            await context.Response.WriteAsync(error.Error.Message);            
+        }
+    });
+});
+
+There are 2 type of errors. Exception and model state errors.
+In angular we will use httpinterceptor to intercept errors and display the error
+Add new file error.interceptor.ts and add injector. The error interceptor implements HttpInterceptor interface
+
+Note: The @Injectable() decorator marks it as a service that can be injected, but Angular can't actually inject it anywhere 
+until you configure an Angular dependency injector with a provider of that service. 
+The injector is responsible for creating service instances and injecting them into classes like HeroListComponent .
+
+import {Injectable} from '@angular/core';
+import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse, HTTP_INTERCEPTORS} from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { IfStmt } from '@angular/compiler';
+import { Key } from 'protractor';
+
+// intercept takes http request and http handler and returns observable httpevent type
+// we will return handle request with rxjs pipe operator
+@Injectable()
+export class ErrorInterceptor implements HttpInterceptor  {
+    intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+        return next.handle(req).pipe(
+            catchError(error => {
+                if (error instanceof HttpErrorResponse) {
+                    if (error.status === 401) {
+                        return throwError(error.statusText);
+                    }
+                    const applicationError = error.headers.get('Application-Error');
+                    if (applicationError) {
+                        console.error(applicationError);
+                        return throwError(applicationError);
+                    }
+
+                    const serverError = error.error; // in 2.2 use error.error.errors
+                    let modelStateErrors = '';
+
+                     if (serverError && typeof serverError === 'object') {
+                        for (const key in serverError) {
+                            if (serverError[key]) {
+                                modelStateErrors += serverError[key] + '\n';
+                            }
+                        }
+                    }
+                    return throwError(modelStateErrors || serverError || 'Server Error');
+                }
+            })
+        );
+    }
+}
+
+
+// error interceptor provider allows access through appsettings.module. after adding below and 
+// add ErrorInterceptorProvider to appsettings.module
+export const ErrorInterceptorProvider = {
+    provide: HTTP_INTERCEPTORS, // multiprovide token
+    useClass: ErrorInterceptor, // we tell the above class
+    multi: true // we dont want to replace existing interceptor and want to add to array
+};
+
