@@ -1,0 +1,89 @@
+Alertifyjs helps to make notifications and message boxes to user
+Add new components like alertifyjs to alert user, angular jwt to handle tokens, ngxbootstrap,bootswatch (change theme for design)
+run command: Install alertifyjs install alertifyjs --save
+In nodemodule we will see alertifyjs
+In angular.json in add scripts add node_modules/alertifyjs/build/alertify.min.js
+In style.css 
+@import '../node_modules/alertifyjs/build/css/alertify.min.css';
+@import '../node_modules/alertifyjs/build/css/themes/bootstrap.min.css';
+
+we will generate angular service and add wrapper methods to alertifyjs
+Create alertify service inside services alertify
+In alertify.services.ts declare let alertify: any; // we need to declare before using this to avoid tlink errors
+Add confirm, success, error, ok button
+in app.module.ts add service to notifiers
+in nav.components.ts add the service to constructor  private alertify: AlertifyService
+Update login and logout methods to call the alertify methods
+
+************Now we will use Angular JWT library to improve token handling****************
+Currently we are storing token in local storage.
+There is nothing to tell its a JWT token.
+though its not a security risk we should manage tokens
+we will check token expiry date and make sure its jwt token
+we dont validate the token since key is stored in the database
+in google search auth0angular2 jwt. use this which is for angular js 6+
+
+npm install @auth0/angular-jwt@2.0.0 (some help is added to https://www.npmjs.com/package/@auth0/angular-jwt)
+we need to make a new method in auth service to see if user is logged in so that we can check the status
+Add jwthelper service to auth.service.ts
+import {JwtHelperService} from '@auth0/angular-jwt';
+jwtHelper = new JwtHelperService();
+ loggedIn() {
+   const token = localStorage.getItem('token');
+   return !this.jwtHelper.isTokenExpired(token);
+ }
+ Update nav.components.ts to call the generic service method
+ return this.authService.loggedIn();
+
+ Now we will decode token and get user name from token
+ decodedToken: any;
+ this.decodedToken = this.jwtHelper.decodeToken(user.token);
+ console.log(this.decodedToken);
+ In the nav.component.html update welcome user with
+ Welcome {authService.decodeToken?.unique_name}
+ Also make authService in nav component constructor property public
+ This displays token user name but will not display token on refresh
+ in app.component.ts make the change to import auth service and import token
+
+Now we will use ngxbootstrap to supplement bootstrap css
+It integrates bootstrap 4 components with angular.
+We will use drop down functionality.
+bootstrap js has dependency on jquery and ngxbootstrap has none
+https://valor-software.com/ngx-bootstrap/#/
+npm install ngx-bootstrap@3.0.1
+In app.module.ts import BsDropdownModule
+To nav.component.html add dropdown, dropdownToggle and #dropdownMenu
+<div *ngIf="loggedIn()" class="dropdown" dropdown>
+      <a class="dropdown-toggle text-light" dropdownToggle>
+        Welcome {{authService.decodedToken?.unique_name | titlecase}}
+      </a>
+      <div class="dropdown-menu" *dropdownMenu>
+        <a class="dropdown-item" href="#"> <i class="fa fa-user"></i> Edit Profile</a>
+        <div class="dropdown-divider" ></div>
+        <a class="dropdown-item" href="#"><i class="fa fa-sign-out"></i>Log Out</a>
+      </div>
+    </div>
+
+    To make cursor a pointer in nav.component.css add 
+    .dropdown-toggle {
+    cursor: pointer;
+    }
+
+    Remove logout link and add to drop down
+    To make menu items pointer add .dropdown-item to css
+    .dropdown-toggle,.dropdown-item {
+    cursor: pointer;
+}
+
+==============Add color****************
+we will use bootswatch https://bootswatch.com/
+We will use united theme
+npm install bootswatch@4.1.1
+@import '../node_modules/bootswatch/dist/united/bootstrap.min.css';
+In nav.component.primary instead of bg-dark use bg-primary
+
+
+
+
+
+
