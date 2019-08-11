@@ -1,0 +1,82 @@
+Angular allows to build a single page application
+Advantage is we dont need to load full page at a time
+***********setting up routine************************
+Generate new member component member list
+Create a new component member-list
+Create a new component lists. This represents list of users the current user likes
+Create a new component messages
+Create a new file routes.ts
+Implement Routes class
+The member will have array of routes. We will match which path is going
+to match which component
+export const appRoutes: Routes = [
+    {path: 'home', component: HomeComponent},
+    {path: 'members', component: MemberListComponent},
+    {path: 'messages', component: MessagesComponent},
+    {path: 'lists', component: ListsComponent},
+    // Anything that does not match home, members, messages and lists will direct to home
+    {path: '**', redirectTo: 'home', pathMatch: 'full'}
+];
+
+Add routermodule to imports in app.module.ts. We need to specify routes we imported
+RouterModule.forRoot(appRoutes)
+
+In nav.component.ts add router link instead of href.
+Add routerlinkactive and routerlinkactive
+<li class="nav-item" routerLinkActive="active">
+        <a class="nav-link " [routerLink]="['/messages']">Messages</a>
+      </li>
+
+Tenporarily in app.component.html replace <app-home> with router outlet since we
+dont have pages implemented for messages, matches, lists
+
+************Now we will do routing in components******************
+To nav.component.ts add    private router: Router
+example in logout methoid this.router.navigate(['/home'])
+***********protecting routes using route guard****************
+create folder _guards
+cd src/app/_guards
+ng g guard auth --spec=false
+auth.guard.ts file is generated
+remove next: ActivatedRouteSnapshot,state: RouterStateSnapshot
+
+The export method can return one of the 3 return types observable<boolean>, promise<boolean>,
+boolean; can activate method tells if the routes are activated or not.
+remove 2 return type Observable<boolean> | Promise<boolean> | 
+
+if (this.authService.loggedIn()) {
+          return true;
+      }
+
+      this.alertify.error('You shall not pass!!!');
+      this.router.navigate(['/home']);
+      return false;
+
+In app.module.ts add AuthGuard to provider
+To route.ts for members add canActivate: [AuthGuard]
+Now in browser if we directly access /member we will be taken to home page
+http://localhost:4200/home/members
+
+**********The above approach of setting route guard works 
+but we dont have to set up for all********************
+We will protect multiple routes with single route guard
+export const appRoutes: Routes = [
+    {path: 'home', component: HomeComponent},
+    {
+        path: '',
+        runGuardsAndResolvers: 'always',
+        canActivate: [AuthGuard],
+        children: [
+            {path: 'members', component: MemberListComponent},
+            {path: 'messages', component: MessagesComponent},
+            {path: 'lists', component: ListsComponent}
+        ]
+    },
+    {path: '**', redirectTo: 'home', pathMatch: 'full'}
+];
+
+if we leave browser open for a while and open new tab
+opened routing not activated. so specify path: '' instead of path: 'home'
+and redirectTo: '' instead of redirectTo: 'home'
+
+
