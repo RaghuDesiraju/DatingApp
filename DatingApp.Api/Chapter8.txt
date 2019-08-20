@@ -1,0 +1,68 @@
+Extend User class to include photo collection
+Create Photo class without user id and user object
+Peform dotnet ef migrations add ExtendedUserClass
+dotnet ef migrations list. If we noticed extended class we have restricted delete which means if users are removed photos will be orphaned. Also user id is not nullbable
+To remove recently added migration  do: dotnet ef migrations remove
+If migration is already applied to database we need to run the commands to roll back rather than doing manually
+dotnet ef database update AddedUserEntity.
+Note: sqllite does not support drop operation
+To drop database dotnet ef database drop
+To update database use dotnet ef database update
+TO Photo ADD    public User User { get; set; }
+        public int UserId { get; set; }
+
+Peform dotnet ef migrations add ExtendedUserClass
+dotnet ef database update
+Now this results in on delete cascade in photos class
+
+*********Perform Seeding in database for development and initial data******************
+go to www.json-generator.com
+Copy Module-8.snippets.txt to the json generator window.
+Click generate few tmes and copy the data to data folder as UserSeedData.json fof female and male
+Create new class Seed in Data folder
+In startup.cs add seed class as service
+Now add dotnet run to load data
+after runnung first time comment seeder.seedUsers();
+
+********create new repository in api**********************
+implement idating repository and the dating repository
+CREATE UsersController
+To avoid cyclical reference issue do following
+   services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+            .AddJsonOptions(opt => {
+                opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+            });
+
+Now we will do a dto to not send entire info back
+Create UserForListDto.cs, UserDetailedDto.cs to avoid not returning password hash
+
+**********Now we will use automapper to map users with the UserForListDto.cs, UserDetailedDto.cs ***************
+Install Automapper.Extensions.Microsoft.DependencyInjection 4.0.1 from nuget (ctrl+shift+p)
+In startup add     services.AddAutoMapper(); to consume in controller
+Using mappers class map the users with dto
+var userToReturn = _mapper.Map<IEnumerable<UserForListDto>>(users);
+var userToReturn = _mapper.Map<UserForDetailedDto>(user);
+
+In helper folder create AutoMapperProfiles
+  public class AutoMapperProfiles:Profile
+    {
+        public AutoMapperProfiles()
+        {
+            CreateMap<User,UserForListDto>();
+            CreateMap<User,UserForDetailedDto>();
+        }
+    }
+
+Now we see password salt and hash in photos because user has password class
+   CreateMap<Photo,PhotosForDetailedDto>();
+
+Now we will fix age
+Add extension method to calculate age
+Update mapper Profile
+  CreateMap<User,UserForDetailedDto>()
+             .ForMember(dest => dest.PhotoUrl, opt => {
+                    opt.MapFrom(src => src.Photos.FirstOrDefault(p=>p.IsMain).Url);
+                })
+                .ForMember(dest => dest.Age, opt => {
+                    opt.ResolveUsing(d => d.DateofBirth.CalculateAge());
+                });
