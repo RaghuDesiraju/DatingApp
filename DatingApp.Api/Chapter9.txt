@@ -1,0 +1,265 @@
+Typescript is a development tool that helps to write code thats not in java script. It compiles to java script
+iT IS super set of java script with interface, classes, static typing and public and private members
+Typescript will be transpiled to java script
+example: static typing: in java script let name:string = "test" then we assign name=10. it will pass compiler
+In type script we get error
+Likewise we can create interface interface Duck {name: string haswings?:boolean} and we can use let daffy:Duck daffy={name:'Daffy'}
+? means optional
+Interfaces help in compile time checking, Intellisense, autocompletion
+
+**********************************Adding interface in the project********************************************
+Add new folder _models and create user.ts, photo.ts
+***************retreive users from api***************
+create new service user in _services
+In environment.ts add the config key for base Url
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:5000/api'
+};
+
+Consume this in baseUrl = environment.apiUrl;
+Implement user service
+import { Injectable } from '@angular/core';
+import { environment } from 'src/environments/environment';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { User } from '../_models/user';
+
+const httpOptions = {
+  headers: new HttpHeaders ({
+    'Authorization': 'Bearer' + localStorage.getItem('token')
+  })
+};
+
+@Injectable({
+  providedIn: 'root'
+})
+export class UserService {
+baseUrl = environment.apiUrl;
+constructor(private http: HttpClient) { }
+
+getUsers(): Observable<User[]> {
+  return this.http.get<User[]>(this.baseUrl + 'users', httpOptions);
+}
+
+getUser(id): Observable<User> {
+  return this.http.get<User>(this.baseUrl + 'users/' + id, httpOptions);
+}
+}
+
+****************Retrieving members into the member list*****************************************
+Implement member list component.ts
+})
+export class MemberListComponent implements OnInit {
+  users: User[];
+  constructor(private userService: UserService, private alertify:AlertifyService) { }
+
+  ngOnInit() {
+    this.loadUsers();
+  }
+
+  loadUsers() {
+    this.userService.getUsers().subscribe((users: User[]) => {
+      this.users = users;
+    }, error => {
+      this.alertify.error(error);
+    });
+  }
+
+  Implement the member list html
+<div class="container">
+  <div class="row">
+  <div class="col-lg-2 col-md-3 col-sm-6">
+    <p *ngFor="let user of users">{{user.knownAs}}</p>
+  </div>
+  </div>
+</div>
+
+We will get error token may be null. This is because we logged in and immediately directed to members page and during the process token was not available. see line 152 for fix
+But when refresh is done users are seen
+
+********************Now we will move member cards***************************************************
+Create a new folder member and drag MemberListComponent inside it
+Create component member-card
+go to get boot strap and get card component
+We will get pass user object to this from parent member-list. So in member card component pass   @Input() user: User;
+In member card html display the user profile
+in member-list.html we will remove <p *ngFor="let user of users">{{user.knownAs}}</p> and add app-membercard
+<div class="container mt-5">
+  <div class="row">
+  <div class="col-lg-2 col-md-3 col-sm-6" *ngFor="let user of users">
+    <app-member-card [user]="user" ></app-member-card>>
+  </div>
+  </div>
+</div>
+
+
+*************add css to zoom in image*************************
+in member-card.component.css
+/*zoom on hover. scale 1.2 times and time to scale up. we can add opacity to blur*/
+.card:hover img {
+    transform: scale(1.2, 1.2); 
+    transition-duration: 500ms;
+    transition-timing-function: ease-out;
+    opacity: 0.7;
+}
+
+/*remove zoom when no focus. scale 1.0 times and time to scale up*/
+.card img {
+    transform: scale(1.0, 1.0); 
+    transition-duration: 500ms;
+    transition-timing-function: ease-out;
+}
+
+/*we need to stop overflow when zooming is happening. this is happening because card img wrapper do add below */
+.card-img-wrapper {
+    overflow: hidden;
+}
+
+************Add animated buttons*********************************
+In membercardcomponent html add animated buttons
+  <ul class="list-inline member-icons animate text-center">
+      <li class="list-inline-item"><button class="btn btn-primary"><i class="fa fa-user"></i></button></li>
+      <li class="list-inline-item"><button class="btn btn-primary"><i class="fa fa-heart"></i></button></li>
+      <li class="list-inline-item"><button class="btn btn-primary"><i class="fa fa-envelope"></i></button></li>
+    </ul>
+But the buttons are overlapping with image. we will do absolute position
+/*we need to stop overflow when zooming is happening. this is happening because card img wrapper do add below */
+.card-img-wrapper {
+    overflow: hidden;
+    position: relative;
+}
+
+.member-icons {
+    position: absolute;;
+    bottom: -30%;
+    left: 0;
+    right: 0;
+    margin-right: auto;
+    margin-left: auto;
+    opacity: 0;
+}
+
+.card-img-wrapper:hover .member-icons {
+    bottom: 0;
+    opacity: 1;
+}
+
+.animate {
+    transition: all 0.3s ease-in-out;
+}
+
+***********Now we will fix unauthorized error which we were getting earlier****************
+we were using auth0/angular-jwt which has http interceptor
+in app,module.ts implement export function and add jwtmodule.forRoot to imports sections
+export function tokenGetter() {
+   return localStorage.getItem('token');
+}
+ JwtModule.forRoot({
+         config: {
+            tokenGetter: tokenGetter,
+            whitelistedDomains: ['localhost:5000'],
+            blacklistedRoutes: ['localhost:5000/api/auth'] // we dont want to accidentally send token
+         }
+      })
+
+    In user service remove httpOptions
+
+****************Now we will create member detailed view when the user button is clicked***********************************
+create member-detail component in members folder add load user method
+  // members/3
+  loadUser() {
+    this.userService.getUser(+this.route.snapshot.params['id']).subscribe((user: User) => {
+      this.user = user;
+    }, error => {
+      this.alertify.error(error);
+    });
+  }
+
+In member-detail component just add  {{user?.knownAs}}.
+Now go to routes.ts add  {path: 'members/:id', component: MemberDetailComponent},
+In member-card html add router link
+
+****************Now make member detail page pretty**********************
+Add style to member card component
+************now we will add tabbed panel*************************************
+go https://valor-software.com/ngx-bootstrap/#/
+we will use tabs component
+In app.module.ts import TabsModule
+apply tab pages and copy the tab pages style sheet to the style.css
+
+*************Avoid safe navigation without ?********************************
+The reason ? is used is during routing the data is not available
+So we will create resolvers.
+Create a new folder _resolvers
+create member-detail.resolver.ts
+import { Injectable } from '@angular/core';
+import { User } from '../_models/user';
+import { Resolve, Router, ActivatedRouteSnapshot } from '@angular/router';
+import { UserService } from '../_services/user.service';
+import { AlertifyService } from '../_services/alertify.service';
+import { resolve } from 'url';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+@Injectable()
+export class MemberDetailResolver implements Resolve<User> {    
+        constructor(private userService: UserService, private router: Router,
+        private alertify: AlertifyService) {}
+
+resolve(route: ActivatedRouteSnapshot): Observable<User> {
+    return this.userService.getUser(route.params['id']).pipe(
+        catchError(error => {
+            this.alertify.error('Problem retrieving data');
+            this.router.navigate(['/members']);
+            return of(null);
+        })
+        );
+    }
+}
+
+Add to app.module.ts add MemberDetailResolver to provider
+Also add to route.ts to resolve with following additional line
+resolve: {user: MemberDetailResolver}
+In MemberDetailComponent.ts we will get data from route itself
+ this.route.data.subscribe(data => {
+      this.user = data['user'];
+    });
+
+  Repeat the same to member list resolver
+
+****************add photo gallery using ngx gallery***********************
+https://npmjs.com/package/ngx-gallery
+npm install ngx-gallery@5.3.2 --save
+In app,module.ts add import { NgxGalleryModule } from 'ngx-gallery';
+Also add NgxGalleryModule
+In MemberDetailComponent add galleryOptions:NgxGalleryOptions
+Provide galleryOptions
+this.galleryOptions = [
+      {
+        width: '500px',
+        height: '500px',
+        imagePercent: 100,
+        thumbnailsColumns: 4,
+        imageAnimation: NgxGalleryAnimation.Slide,
+        preview: false
+      }
+    ];
+
+Load images
+this.galleryImages = this.getImages();
+getImages() {
+    const imageUrls = [];
+    for (let i = 0; i < this.user.photos.length; i++) {
+      imageUrls.push({
+        small: this.user.photos[i].url,
+        medium: this.user.photos[i].url,
+        big: this.user.photos[i].url,
+        description: this.user.photos[i].description
+      });
+    }
+    return imageUrls;
+  }
+
+  In member detail component we add 
+  <ngx-gallery [options]="galleryOptions" [images]="galleryImages"></ngx-gallery> 
