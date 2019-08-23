@@ -1,0 +1,114 @@
+In this module we will update resources.
+We will provide member edit profile, deactivate route guard, use @viewchild to accept child methods in parent
+**************Create Member edit component*****************************
+Create new member-edit component and add to app.module.this
+Also add to route.ts. We dont pass the id here and we will directly retreive this from token stored in local storage
+{path: 'members/:edit', component: MemberEditComponent}
+Open nav.component.hetml add routerlink. Remove href
+Copy member-detail resolver as member-edit resolver and edit accordingly. Make changes to return decoded token
+
+resolve(route: ActivatedRouteSnapshot): Observable<User> {
+    return this.userService.getUser(this.authService.decodedToken.nameid).pipe(
+        catchError(error => {
+            this.alertify.error('Problem retrieving your data');
+            this.router.navigate(['/members']);
+            return of(null);
+        })
+        );
+    }
+}
+
+Add this member edit resolver to app.module.ts and also add the MemberEditComponent tied to member edit resolver
+
+*************************desugn the template for the member edit profile page******************************
+Copy entire member-detail.component.html to member-edit html
+
+ <h4>Description</h4>
+                    <textarea name="introduction" rows="6" class="form-control" [(ngModel)]="user.introduction"></textarea> 
+                    <h4>Looking For</h4>
+                    <textarea name="lookingFor" rows="6" class="form-control" [(ngModel)]="user.lookingFor"></textarea> 
+                    <h4>Interests</h4>
+                    <textarea name="interests" rows="6" class="form-control" [(ngModel)]="user.interests"></textarea> 
+                    <h4>Location Details:</h4>
+                    <div class="form-inline">
+                        <label for="city">City</label>
+                        <input class="form-control" type="text" name="city" [(ngModel)]="user.city">
+                        <label for="country">Country</label>
+                        <input class="form-control" type="text" name="country" [(ngModel)]="user.country">
+                    </div>
+
+Copy member detail css to member edit css
+Use form state to display information only when changed
+<form #editForm="ngForm" (ngSubmit)="updateUser()"> 
+Likewise show banner only when changed
+ <div *ngIf="editForm.dirty" class="alert alert-info">
+              <strong>Information: </strong>You have made changes. Any unsaved changes will be lost!
+            </div>            
+Enable save button when dirty
+     <button [disabled]="!editForm.dirty" class="btn btn-success btn-block">Save Changes</button> 
+
+Note: if button control is outside form just point the id of the form to the button
+<form #editForm="ngForm" id="editForm" (ngSubmit)="updateUser()"> 
+
+Once changes are saved we need to reset the form dirty to false or simply reset the form
+Go to member component and add @ViewChild('editForm') editForm: NgForm;
+this.editForm.reset(this.user); // if this.user is not specified all values will be wiped outside
+
+If user types and accidentally hits back button and comes back, we want to persist the changes 
+then we should deactivate route
+**************deactivate route**********************
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, CanDeactivate, RouterStateSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+import { MemberEditComponent } from '../members/member-edit/member-edit.component';
+
+    @Injectable()
+    export class PreventUnsavedChanges implements CanDeactivate<MemberEditComponent> {
+        canDeactivate(component: MemberEditComponent) {
+            if (component.editForm.dirty) {
+                return confirm('Are you sure you want to continue? Any unsaved changes will be lost');
+            }
+            return true;
+        }
+    }
+
+Add the PreventUnsavedChanges to provider section app.module.ts
+Add the PreventUnsavedChanges guard to route.ts
+ {path: 'member/edit', component: MemberEditComponent,
+                resolve: {user: MemberEditResolver}, canDeactivate: [PreventUnsavedChanges]},
+
+However closing the browser will cause the changes to lose
+For warn close button on browser use host listener
+
+ @HostListener('window:beforeunload', ['$event'])
+  unloadNotification($event: any) {
+    if (this.editForm.dirty) {
+      $event.returnValue = true;
+    }
+  }
+
+  This will provide custom message not our own message
+
+  *************Persist member change in api***********************
+  We allowed user to edit only certain fields. 
+  So we need to create dto and push the changes
+  Now automap profiles
+  Use automapper CreateMap<UserForUpdateDto,User>();
+    [HttpPut("{id}")]
+        public async Task<IActionResult>UpdateUser(int id, UserForUpdateDto userForUpdateDto)
+        {
+            if(id != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value))
+                return Unauthorized();
+
+            var userFromRepo = await _repo.GetUser(id);
+            _mapper.Map(userForUpdateDto, userFromRepo);
+            if(await _repo.SaveAll())
+                return NoContent();
+            throw new Exception($"Updating user {id} failed on save");
+        }
+    
+    *************Update member component*******************
+    In user service.ts
+      updateUser(id: number, user: User) {
+    return this.http.put(this.baseUrl + 'users/' + id, user); //, httpOptions);
+  }
